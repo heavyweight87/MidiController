@@ -32,3 +32,4 @@
 *.app
 
 workspace
+MidiController/STM32CubeIDE/Debug/
