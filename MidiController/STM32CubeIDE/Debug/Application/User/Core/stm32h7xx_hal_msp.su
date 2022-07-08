@@ -1,0 +1,11 @@
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:64:6:HAL_MspInit	8	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:87:6:HAL_CRC_MspInit	8	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:109:6:HAL_CRC_MspDeInit	0	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:131:6:HAL_DMA2D_MspInit	16	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:156:6:HAL_DMA2D_MspDeInit	0	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:181:6:HAL_LTDC_MspInit	256	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:328:6:HAL_LTDC_MspDeInit	8	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:401:6:HAL_OSPI_MspInit	96	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:549:6:HAL_OSPI_MspDeInit	8	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:635:6:HAL_UART_MspInit	216	static
+F:/projects/MidiController/MidiController/Core/Src/stm32h7xx_hal_msp.c:682:6:HAL_UART_MspDeInit	0	static
