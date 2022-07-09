@@ -22,8 +22,8 @@
 
 #include "usb_host.h"
 #include "usbh_core.h"
-#include "usbh_msc.h"
 #include "usbh_audio.h"
+#include "usbh_hid.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -73,24 +73,23 @@ void MX_USB_HOST_Init(void)
   /* USER CODE END USB_HOST_Init_PreTreatment */
 
   /* Init host Library, add supported class and start the library. */
-  if (USBH_Init(&hUsbHostHS, USBH_UserProcess, HOST_HS) != USBH_OK)
-  {
-    Error_Handler();
-  }
-  if (USBH_RegisterClass(&hUsbHostHS, USBH_MSC_CLASS) != USBH_OK)
-  {
-    Error_Handler();
-  }
-  if (USBH_Start(&hUsbHostHS) != USBH_OK)
-  {
-    Error_Handler();
-  }
+	if (USBH_Init(&hUsbHostHS, USBH_UserProcess, HOST_HS) != USBH_OK)
+	{
+		Error_Handler();
+	}
+	if (USBH_RegisterClass(&hUsbHostHS, USBH_AUDIO_CLASS) != USBH_OK)
+	{
+		Error_Handler();
+	}
+	if (USBH_RegisterClass(&hUsbHostHS, USBH_HID_CLASS) != USBH_OK)
+	{
+		Error_Handler();
+	}
+	if (USBH_Start(&hUsbHostHS) != USBH_OK)
+	{
+		Error_Handler();
+	}
   /* USER CODE BEGIN USB_HOST_Init_PostTreatment */
-
-  if (USBH_RegisterClass(&hUsbHostHS, USBH_AUDIO_CLASS) != USBH_OK)
-  {
-      Error_Handler();
-  }
 
   /* USER CODE END USB_HOST_Init_PostTreatment */
 }

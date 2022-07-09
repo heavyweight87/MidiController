@@ -21,13 +21,13 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "app_touchgfx.h"
-#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "stm32h735g_discovery_ospi.h"
 #include "stm32h7xx_hal_ospi.h"
 #include "stdio.h"
+#include "usb_host.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -701,14 +701,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void *argument)
 {
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
   /* USER CODE BEGIN 5 */
+	MX_USB_HOST_Init();
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(100);
-  }
+	for(;;)
+	{
+	osDelay(100);
+	}
   /* USER CODE END 5 */
 }
 
