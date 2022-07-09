@@ -684,6 +684,7 @@ USBH_StatusTypeDef USBH_CtlReq(USBH_HandleTypeDef *phost, uint8_t *buff,
 {
   USBH_StatusTypeDef status;
   status = USBH_BUSY;
+
   switch (phost->RequestState)
   {
     case CMD_SEND:

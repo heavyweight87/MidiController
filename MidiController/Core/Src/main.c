@@ -492,7 +492,6 @@ static void MX_OCTOSPI2_Init(void)
 {
 
   /* USER CODE BEGIN OCTOSPI2_Init 0 */
-  BSP_OSPI_RAM_Init_t ospi_ram_init;
   /* USER CODE END OCTOSPI2_Init 0 */
 
   OSPIM_CfgTypeDef sOspiManagerCfg = {0};

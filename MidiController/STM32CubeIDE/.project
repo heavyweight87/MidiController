@@ -34,7 +34,7 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>STM32H735G-DK.ioc</name>
+			<name>MidiController.ioc</name>
 			<type>1</type>
 			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/STM32H735G-DK.ioc</locationURI>
 		</link>
@@ -234,16 +234,6 @@
 			<locationURI>$%7BPARENT-1-PROJECT_LOC%7D/Middlewares/Third_Party/FreeRTOS/Source/timers.c</locationURI>
 		</link>
 		<link>
-			<name>Middlewares/USB_Host_Library/usbh_audio.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/AUDIO/Src/usbh_audio.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_cdc.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Src/usbh_cdc.c</locationURI>
-		</link>
-		<link>
 			<name>Middlewares/USB_Host_Library/usbh_core.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_core.c</locationURI>
@@ -252,26 +242,6 @@
 			<name>Middlewares/USB_Host_Library/usbh_ctlreq.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Core/Src/usbh_ctlreq.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_hid.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_hid_keybd.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid_keybd.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_hid_mouse.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid_mouse.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_hid_parser.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/HID/Src/usbh_hid_parser.c</locationURI>
 		</link>
 		<link>
 			<name>Middlewares/USB_Host_Library/usbh_ioreq.c</name>
@@ -292,16 +262,6 @@
 			<name>Middlewares/USB_Host_Library/usbh_msc_scsi.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MSC/Src/usbh_msc_scsi.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_mtp.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MTP/Src/usbh_mtp.c</locationURI>
-		</link>
-		<link>
-			<name>Middlewares/USB_Host_Library/usbh_mtp_ptp.c</name>
-			<type>1</type>
-			<locationURI>PARENT-1-PROJECT_LOC/Middlewares/ST/STM32_USB_Host_Library/Class/MTP/Src/usbh_mtp_ptp.c</locationURI>
 		</link>
 		<link>
 			<name>Middlewares/USB_Host_Library/usbh_pipes.c</name>
