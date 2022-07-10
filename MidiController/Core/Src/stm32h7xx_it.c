@@ -52,7 +52,7 @@
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-extern HCD_HandleTypeDef hhcd_USB_OTG_HS;
+extern HCD_HandleTypeDef hhcd_USB_OTG_Handle;
 /* USER CODE END 0 */
 
 /* External variables --------------------------------------------------------*/
@@ -212,7 +212,7 @@ void OTG_HS_IRQHandler(void)
   /* USER CODE BEGIN OTG_HS_IRQn 0 */
 
   /* USER CODE END OTG_HS_IRQn 0 */
-  HAL_HCD_IRQHandler(&hhcd_USB_OTG_HS);
+  HAL_HCD_IRQHandler(&hhcd_USB_OTG_Handle);
   /* USER CODE BEGIN OTG_HS_IRQn 1 */
 
   /* USER CODE END OTG_HS_IRQn 1 */

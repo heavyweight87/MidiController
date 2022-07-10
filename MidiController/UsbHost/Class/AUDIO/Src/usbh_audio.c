@@ -38,6 +38,7 @@ EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_audio.h"
+#include "usbh_midi.h"
 
 /** @addtogroup USBH_LIB
   * @{
@@ -194,7 +195,7 @@ USBH_ClassTypeDef  AUDIO_Class =
   */
 static USBH_StatusTypeDef USBH_AUDIO_InterfaceInit(USBH_HandleTypeDef *phost)
 {
-  USBH_StatusTypeDef out_status, in_status;
+  USBH_StatusTypeDef out_status, in_status, midi_in_status, midi_out_status;
   AUDIO_HandleTypeDef *AUDIO_Handle;
   uint8_t  interface, index;
   uint16_t ep_size_out = 0U;
@@ -222,10 +223,12 @@ static USBH_StatusTypeDef USBH_AUDIO_InterfaceInit(USBH_HandleTypeDef *phost)
 
   /* 1st Step:  Find Audio Interfaces */
   out_status = USBH_AUDIO_FindAudioStreamingIN(phost);
-
   in_status = USBH_AUDIO_FindAudioStreamingOUT(phost);
+  midi_in_status = USBH_AUDIO_FindMidiStreamingIn(phost);
 
-  if ((out_status == USBH_FAIL) && (in_status == USBH_FAIL))
+  midi_out_status = USBH_AUDIO_FindMidiStreamingOut(phost);
+
+  if ((out_status == USBH_FAIL) && (in_status == USBH_FAIL) && (midi_in_status == USBH_FAIL) && (midi_out_status == USBH_FAIL))
   {
     USBH_DbgLog("%s class configuration not supported.", phost->pActiveClass->Name);
     return USBH_FAIL;
@@ -741,6 +744,7 @@ static USBH_StatusTypeDef USBH_AUDIO_SOFProcess(USBH_HandleTypeDef *phost)
 
   return USBH_OK;
 }
+
 /**
   * @brief  Find IN Audio Streaming interfaces
   * @param  phost: Host handle
@@ -938,57 +942,70 @@ static USBH_StatusTypeDef ParseCSDescriptors(AUDIO_ClassSpecificDescTypedef *cla
                                              uint8_t ac_subclass,
                                              uint8_t *pdesc)
 {
-  if (ac_subclass == USB_SUBCLASS_AUDIOCONTROL)
-  {
-    switch (pdesc[2])
-    {
-      case UAC_HEADER:
-        class_desc->cs_desc.HeaderDesc = (AUDIO_HeaderDescTypeDef *)(void *)pdesc;
-        break;
+	if (ac_subclass == USB_SUBCLASS_AUDIOCONTROL)
+	{
+	switch (pdesc[2])
+	{
+		case UAC_HEADER:
+			class_desc->cs_desc.HeaderDesc = (AUDIO_HeaderDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_INPUT_TERMINAL:
-        class_desc->cs_desc.InputTerminalDesc[class_desc->InputTerminalNum++] = (AUDIO_ITDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_INPUT_TERMINAL:
+			class_desc->cs_desc.InputTerminalDesc[class_desc->InputTerminalNum++] = (AUDIO_ITDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_OUTPUT_TERMINAL:
-        class_desc->cs_desc.OutputTerminalDesc[class_desc->OutputTerminalNum++] = (AUDIO_OTDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_OUTPUT_TERMINAL:
+			class_desc->cs_desc.OutputTerminalDesc[class_desc->OutputTerminalNum++] = (AUDIO_OTDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_FEATURE_UNIT:
-        class_desc->cs_desc.FeatureUnitDesc[class_desc->FeatureUnitNum++] = (AUDIO_FeatureDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_FEATURE_UNIT:
+			class_desc->cs_desc.FeatureUnitDesc[class_desc->FeatureUnitNum++] = (AUDIO_FeatureDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_SELECTOR_UNIT:
-        class_desc->cs_desc.SelectorUnitDesc[class_desc->SelectorUnitNum++] = (AUDIO_SelectorDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_SELECTOR_UNIT:
+			class_desc->cs_desc.SelectorUnitDesc[class_desc->SelectorUnitNum++] = (AUDIO_SelectorDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_MIXER_UNIT:
-        class_desc->cs_desc.MixerUnitDesc[class_desc->MixerUnitNum++] = (AUDIO_MixerDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_MIXER_UNIT:
+			class_desc->cs_desc.MixerUnitDesc[class_desc->MixerUnitNum++] = (AUDIO_MixerDescTypeDef *)(void *)pdesc;
+			break;
 
-      default:
-        break;
-    }
-  }
-  else
-  {
-    if (ac_subclass == USB_SUBCLASS_AUDIOSTREAMING)
-    {
-      switch (pdesc[2])
-      {
-        case UAC_AS_GENERAL:
-          class_desc->as_desc[class_desc->ASNum].GeneralDesc = (AUDIO_ASGeneralDescTypeDef *)(void *)pdesc;
-          break;
-        case UAC_FORMAT_TYPE:
-          class_desc->as_desc[class_desc->ASNum++].FormatTypeDesc = (AUDIO_ASFormatTypeDescTypeDef *)(void *)pdesc;
-          break;
-        default:
-          break;
-      }
-    }
-  }
+		default:
+			break;
+	}
+	}
+	else if (ac_subclass == USB_SUBCLASS_AUDIOSTREAMING)
+	{
+		switch (pdesc[2])
+		{
+		case UAC_AS_GENERAL:
+			class_desc->as_desc[class_desc->ASNum].GeneralDesc = (AUDIO_ASGeneralDescTypeDef *)(void *)pdesc;
+			break;
+		case UAC_FORMAT_TYPE:
+			class_desc->as_desc[class_desc->ASNum++].FormatTypeDesc = (AUDIO_ASFormatTypeDescTypeDef *)(void *)pdesc;
+			break;
+		default:
+			break;
+		}
 
-  return USBH_OK;
+	}
+	else if(ac_subclass == USB_SUBCLASS_MIDISTREAMING)
+	{
+		switch (pdesc[2])
+		{
+		case MS_HEADER:
+			class_desc->ms_desc.HeaderDesc = (AUDIO_MSHeaderDescTypeDef*)(void*)pdesc;
+			break;
+		case MIDI_IN_JACK:
+			class_desc->ms_desc.MidiINJackDesc[class_desc->MidiInputJackNum++] = (AUDIO_MidiINJackDescTypeDef*)(void*)pdesc;
+			break;
+		case MIDI_OUT_JACK:
+			class_desc->ms_desc.MidiOutJackDesc[class_desc->MidiOutputJackNum++] = (AUDIO_MidiOUTJackDescTypeDef*)(void*)pdesc;
+			break;
+		}
+	}
+
+	return USBH_OK;
 }
 
 
