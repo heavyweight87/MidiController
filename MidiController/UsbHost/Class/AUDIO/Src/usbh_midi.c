@@ -26,12 +26,12 @@ USBH_StatusTypeDef USBH_AUDIO_FindMidiStreamingOut(USBH_HandleTypeDef *phost)
       if (((phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress & 0x80U) == 0x00U) &&
           (phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize > 0U))
       {
-        AUDIO_Handle->midi_out[alt_settings].Ep = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress;
-        AUDIO_Handle->midi_out[alt_settings].EpSize = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize;
-        AUDIO_Handle->midi_out[alt_settings].interface = phost->device.CfgDesc.Itf_Desc[interface].bInterfaceNumber;
-        AUDIO_Handle->midi_out[alt_settings].AltSettings = phost->device.CfgDesc.Itf_Desc[interface].bAlternateSetting;
-        AUDIO_Handle->midi_out[alt_settings].Poll = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bInterval;
-        AUDIO_Handle->midi_out[alt_settings].valid = 1U;
+        AUDIO_Handle->midi_stream_out[alt_settings].Ep = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress;
+        AUDIO_Handle->midi_stream_out[alt_settings].EpSize = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize;
+        AUDIO_Handle->midi_stream_out[alt_settings].interface = phost->device.CfgDesc.Itf_Desc[interface].bInterfaceNumber;
+        AUDIO_Handle->midi_stream_out[alt_settings].AltSettings = phost->device.CfgDesc.Itf_Desc[interface].bAlternateSetting;
+        AUDIO_Handle->midi_stream_out[alt_settings].Poll = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bInterval;
+        AUDIO_Handle->midi_stream_out[alt_settings].valid = 1U;
         alt_settings++;
       }
     }
@@ -64,12 +64,12 @@ USBH_StatusTypeDef USBH_AUDIO_FindMidiStreamingIn(USBH_HandleTypeDef *phost)
       if (((phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress & 0x80U) != 0U) &&
           (phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize > 0U))
       {
-        AUDIO_Handle->midi_in[alt_settings].Ep = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress;
-        AUDIO_Handle->midi_in[alt_settings].EpSize = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize;
-        AUDIO_Handle->midi_in[alt_settings].interface = phost->device.CfgDesc.Itf_Desc[interface].bInterfaceNumber;
-        AUDIO_Handle->midi_in[alt_settings].AltSettings = phost->device.CfgDesc.Itf_Desc[interface].bAlternateSetting;
-        AUDIO_Handle->midi_in[alt_settings].Poll = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bInterval;
-        AUDIO_Handle->midi_in[alt_settings].valid = 1U;
+        AUDIO_Handle->midi_stream_in[alt_settings].Ep = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bEndpointAddress;
+        AUDIO_Handle->midi_stream_in[alt_settings].EpSize = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].wMaxPacketSize;
+        AUDIO_Handle->midi_stream_in[alt_settings].interface = phost->device.CfgDesc.Itf_Desc[interface].bInterfaceNumber;
+        AUDIO_Handle->midi_stream_in[alt_settings].AltSettings = phost->device.CfgDesc.Itf_Desc[interface].bAlternateSetting;
+        AUDIO_Handle->midi_stream_in[alt_settings].Poll = phost->device.CfgDesc.Itf_Desc[interface].Ep_Desc[0].bInterval;
+        AUDIO_Handle->midi_stream_in[alt_settings].valid = 1U;
         alt_settings++;
       }
     }
