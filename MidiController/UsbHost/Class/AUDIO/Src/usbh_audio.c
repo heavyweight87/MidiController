@@ -285,6 +285,23 @@ static USBH_StatusTypeDef USBH_AUDIO_InterfaceInit(USBH_HandleTypeDef *phost)
 		}
 	}
 
+	for (index = 0U; index < AUDIO_MAX_AUDIO_STD_INTERFACE; index ++)
+	{
+		if (AUDIO_Handle->midi_stream_out[index].valid == 1U)
+		{
+			if (ep_size_out < AUDIO_Handle->midi_stream_out[index].EpSize)
+			{
+				ep_size_out = AUDIO_Handle->midi_stream_out[index].EpSize;
+				AUDIO_Handle->midi_out.interface = AUDIO_Handle->midi_stream_out[index].interface;
+				AUDIO_Handle->midi_out.AltSettings = AUDIO_Handle->midi_stream_out[index].AltSettings;
+				AUDIO_Handle->midi_out.Ep = AUDIO_Handle->midi_stream_out[index].Ep;
+				AUDIO_Handle->midi_out.EpSize = AUDIO_Handle->midi_stream_out[index].EpSize;
+				AUDIO_Handle->midi_out.Poll = (uint8_t)AUDIO_Handle->midi_stream_out[index].Poll;
+				AUDIO_Handle->midi_out.supported = 1U;
+			}
+		}
+	}
+
 	if (USBH_AUDIO_FindHIDControl(phost) == USBH_OK)
 	{
 		AUDIO_Handle->control.supported = 1U;
@@ -357,7 +374,7 @@ static USBH_StatusTypeDef USBH_AUDIO_InterfaceInit(USBH_HandleTypeDef *phost)
 							AUDIO_Handle->midi_in.Ep,
 							phost->device.address,
 							phost->device.speed,
-							USB_EP_TYPE_ISOC,
+							USB_EP_TYPE_BULK,
 							AUDIO_Handle->midi_in.EpSize);
 
 		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->midi_in.Pipe, 0U);
@@ -374,7 +391,7 @@ static USBH_StatusTypeDef USBH_AUDIO_InterfaceInit(USBH_HandleTypeDef *phost)
 							AUDIO_Handle->midi_out.Ep,
 							phost->device.address,
 							phost->device.speed,
-							USB_EP_TYPE_ISOC,
+							USB_EP_TYPE_BULK,
 							AUDIO_Handle->midi_out.EpSize);
 
 		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->midi_out.Pipe, 0U);
@@ -635,6 +652,11 @@ static USBH_StatusTypeDef USBH_AUDIO_CSRequest(USBH_HandleTypeDef *phost,
   USBH_StatusTypeDef req_status = USBH_BUSY;
   uint16_t VolumeCtl, ResolutionCtl;
 
+  if(AUDIO_Handle->midi_in.supported)
+  {
+	  AUDIO_Handle->cs_req_state = AUDIO_REQ_CS_IDLE;
+  }
+
   /* Switch AUDIO REQ state machine */
   switch (AUDIO_Handle->cs_req_state)
   {
@@ -768,20 +790,44 @@ static USBH_StatusTypeDef USBH_AUDIO_HandleCSRequest(USBH_HandleTypeDef *phost)
   */
 static USBH_StatusTypeDef USBH_AUDIO_Process(USBH_HandleTypeDef *phost)
 {
-  USBH_StatusTypeDef status = USBH_BUSY;
-  AUDIO_HandleTypeDef *AUDIO_Handle = (AUDIO_HandleTypeDef *)  phost->pActiveClass->pData;
+	static int status = 0;
+	int length = 0;
+	USBH_URBStateTypeDef URB_Status = USBH_URB_IDLE;
+	static uint8_t buffer[256];
+	AUDIO_HandleTypeDef *AUDIO_Handle = (AUDIO_HandleTypeDef *)  phost->pActiveClass->pData;
 
-  if (AUDIO_Handle->headphone.supported == 1U)
-  {
-    (void)USBH_AUDIO_OutputStream(phost);
-  }
+	if (AUDIO_Handle->headphone.supported == 1U)
+	{
+		(void)USBH_AUDIO_OutputStream(phost);
+	}
 
-  if (AUDIO_Handle->microphone.supported == 1U)
-  {
-    (void)USBH_AUDIO_InputStream(phost);
-  }
+	if (AUDIO_Handle->microphone.supported == 1U)
+	{
+		(void)USBH_AUDIO_InputStream(phost);
+	}
 
-  return status;
+	if(AUDIO_Handle->midi_in.supported)
+	{
+		if(status == 0)
+		{
+			USBH_BulkReceiveData(phost, buffer, AUDIO_Handle->midi_in.EpSize, AUDIO_Handle->midi_in.Pipe);
+			status = 1;
+		}
+		else
+		{
+			URB_Status = USBH_LL_GetURBState(phost, AUDIO_Handle->midi_in.Pipe);
+
+			/*Check the status done for reception*/
+			if (URB_Status == USBH_URB_DONE)
+			{
+				length = USBH_LL_GetLastXferSize(phost, AUDIO_Handle->midi_in.Pipe);
+			}
+		//	printf("len = %d", length);
+			status = 1;
+		}
+	}
+
+	return status;
 }
 
 /**
