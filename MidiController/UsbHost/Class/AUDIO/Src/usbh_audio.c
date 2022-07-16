@@ -822,7 +822,6 @@ static USBH_StatusTypeDef USBH_AUDIO_Process(USBH_HandleTypeDef *phost)
 			{
 				length = USBH_LL_GetLastXferSize(phost, AUDIO_Handle->midi_in.Pipe);
 			}
-		//	printf("len = %d", length);
 			status = 1;
 		}
 	}
