@@ -27,6 +27,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_core.h"
+#include "usbh_midi.h"
 
 /** @addtogroup USBH_LIB
   * @{
@@ -387,6 +388,7 @@ AUDIO_ACDescTypeDef;
 typedef struct
 {
   AUDIO_ACDescTypeDef   cs_desc; /* Only one control descriptor*/
+  AUDIO_MSDescTypeDef	ms_desc; /* midi descriptor */
   AUDIO_ASDescTypeDef   as_desc[AUDIO_MAX_STREAMING_INTERFACE];
 
   uint16_t ASNum;
@@ -395,6 +397,8 @@ typedef struct
   uint16_t FeatureUnitNum;
   uint16_t SelectorUnitNum;
   uint16_t MixerUnitNum;
+  uint16_t MidiInputJackNum;
+  uint16_t MidiOutputJackNum;
 }
 AUDIO_ClassSpecificDescTypedef;
 
@@ -409,10 +413,14 @@ typedef struct _AUDIO_Process
 
   AUDIO_STREAMING_IN_HandleTypeDef   stream_in[AUDIO_MAX_AUDIO_STD_INTERFACE];
   AUDIO_STREAMING_OUT_HandleTypeDef  stream_out[AUDIO_MAX_AUDIO_STD_INTERFACE];
+  AUDIO_STREAMING_IN_HandleTypeDef   midi_stream_in[AUDIO_MAX_AUDIO_STD_INTERFACE];
+  AUDIO_STREAMING_OUT_HandleTypeDef  midi_stream_out[AUDIO_MAX_AUDIO_STD_INTERFACE];
   AUDIO_ClassSpecificDescTypedef     class_desc;
 
   AUDIO_InterfaceStreamPropTypeDef   headphone;
   AUDIO_InterfaceStreamPropTypeDef   microphone;
+  AUDIO_InterfaceStreamPropTypeDef   midi_in;
+  AUDIO_InterfaceStreamPropTypeDef   midi_out;
   AUDIO_InterfaceControlPropTypeDef  control;
   uint16_t                            mem [8];
   uint8_t                            temp_feature;

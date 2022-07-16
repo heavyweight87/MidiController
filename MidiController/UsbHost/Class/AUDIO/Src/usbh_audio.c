@@ -38,6 +38,7 @@ EndBSPDependencies */
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbh_audio.h"
+#include "usbh_midi.h"
 
 /** @addtogroup USBH_LIB
   * @{
@@ -194,141 +195,213 @@ USBH_ClassTypeDef  AUDIO_Class =
   */
 static USBH_StatusTypeDef USBH_AUDIO_InterfaceInit(USBH_HandleTypeDef *phost)
 {
-  USBH_StatusTypeDef out_status, in_status;
-  AUDIO_HandleTypeDef *AUDIO_Handle;
-  uint8_t  interface, index;
-  uint16_t ep_size_out = 0U;
-  uint16_t ep_size_in = 0U;
+	USBH_StatusTypeDef out_status, in_status, midi_in_status, midi_out_status;
+	AUDIO_HandleTypeDef *AUDIO_Handle;
+	uint8_t  interface, index;
+	uint16_t ep_size_out = 0U;
+	uint16_t ep_size_in = 0U;
 
-  interface = USBH_FindInterface(phost, AC_CLASS, USB_SUBCLASS_AUDIOCONTROL, 0x00U);
+	interface = USBH_FindInterface(phost, AC_CLASS, USB_SUBCLASS_AUDIOCONTROL, 0x00U);
 
-  if (interface == 0xFFU) /* Not Valid Interface */
-  {
-    USBH_DbgLog("Cannot Find the interface for %s class.", phost->pActiveClass->Name);
-    return USBH_FAIL;
-  }
+	if (interface == 0xFFU) /* Not Valid Interface */
+	{
+	USBH_DbgLog("Cannot Find the interface for %s class.", phost->pActiveClass->Name);
+	return USBH_FAIL;
+	}
 
-  phost->pActiveClass->pData = (AUDIO_HandleTypeDef *)USBH_malloc(sizeof(AUDIO_HandleTypeDef));
-  AUDIO_Handle = (AUDIO_HandleTypeDef *) phost->pActiveClass->pData;
+	phost->pActiveClass->pData = (AUDIO_HandleTypeDef *)USBH_malloc(sizeof(AUDIO_HandleTypeDef));
+	AUDIO_Handle = (AUDIO_HandleTypeDef *) phost->pActiveClass->pData;
 
-  if (AUDIO_Handle == NULL)
-  {
-    USBH_DbgLog("Cannot allocate memory for AUDIO Handle");
-    return USBH_FAIL;
-  }
+	if (AUDIO_Handle == NULL)
+	{
+	USBH_DbgLog("Cannot allocate memory for AUDIO Handle");
+	return USBH_FAIL;
+	}
 
-  /* Initialize audio handler */
-  (void)USBH_memset(AUDIO_Handle, 0, sizeof(AUDIO_HandleTypeDef));
+	/* Initialize audio handler */
+	(void)USBH_memset(AUDIO_Handle, 0, sizeof(AUDIO_HandleTypeDef));
 
-  /* 1st Step:  Find Audio Interfaces */
-  out_status = USBH_AUDIO_FindAudioStreamingIN(phost);
+	/* 1st Step:  Find Audio Interfaces */
+	out_status = USBH_AUDIO_FindAudioStreamingIN(phost);
+	in_status = USBH_AUDIO_FindAudioStreamingOUT(phost);
+	midi_in_status = USBH_AUDIO_FindMidiStreamingIn(phost);
 
-  in_status = USBH_AUDIO_FindAudioStreamingOUT(phost);
+	midi_out_status = USBH_AUDIO_FindMidiStreamingOut(phost);
 
-  if ((out_status == USBH_FAIL) && (in_status == USBH_FAIL))
-  {
-    USBH_DbgLog("%s class configuration not supported.", phost->pActiveClass->Name);
-    return USBH_FAIL;
-  }
+	if ((out_status == USBH_FAIL) && (in_status == USBH_FAIL) && (midi_in_status == USBH_FAIL) && (midi_out_status == USBH_FAIL))
+	{
+	USBH_DbgLog("%s class configuration not supported.", phost->pActiveClass->Name);
+	return USBH_FAIL;
+	}
 
   /* 2nd Step:  Select Audio Streaming Interfaces with largest endpoint size : default behavior */
-  for (index = 0U; index < AUDIO_MAX_AUDIO_STD_INTERFACE; index ++)
-  {
-    if (AUDIO_Handle->stream_out[index].valid == 1U)
-    {
-      if (ep_size_out < AUDIO_Handle->stream_out[index].EpSize)
-      {
-        ep_size_out = AUDIO_Handle->stream_out[index].EpSize;
-        AUDIO_Handle->headphone.interface = AUDIO_Handle->stream_out[index].interface;
-        AUDIO_Handle->headphone.AltSettings = AUDIO_Handle->stream_out[index].AltSettings;
-        AUDIO_Handle->headphone.Ep = AUDIO_Handle->stream_out[index].Ep;
-        AUDIO_Handle->headphone.EpSize = AUDIO_Handle->stream_out[index].EpSize;
-        AUDIO_Handle->headphone.Poll = (uint8_t)AUDIO_Handle->stream_out[index].Poll;
-        AUDIO_Handle->headphone.supported = 1U;
-      }
-    }
+	for (index = 0U; index < AUDIO_MAX_AUDIO_STD_INTERFACE; index ++)
+	{
+		if (AUDIO_Handle->stream_out[index].valid == 1U)
+		{
+			if (ep_size_out < AUDIO_Handle->stream_out[index].EpSize)
+			{
+				ep_size_out = AUDIO_Handle->stream_out[index].EpSize;
+				AUDIO_Handle->headphone.interface = AUDIO_Handle->stream_out[index].interface;
+				AUDIO_Handle->headphone.AltSettings = AUDIO_Handle->stream_out[index].AltSettings;
+				AUDIO_Handle->headphone.Ep = AUDIO_Handle->stream_out[index].Ep;
+				AUDIO_Handle->headphone.EpSize = AUDIO_Handle->stream_out[index].EpSize;
+				AUDIO_Handle->headphone.Poll = (uint8_t)AUDIO_Handle->stream_out[index].Poll;
+				AUDIO_Handle->headphone.supported = 1U;
+			}
+		}
 
-    if (AUDIO_Handle->stream_in[index].valid == 1U)
-    {
-      if (ep_size_in < AUDIO_Handle->stream_in[index].EpSize)
-      {
-        ep_size_in = AUDIO_Handle->stream_in[index].EpSize;
-        AUDIO_Handle->microphone.interface = AUDIO_Handle->stream_in[index].interface;
-        AUDIO_Handle->microphone.AltSettings = AUDIO_Handle->stream_in[index].AltSettings;
-        AUDIO_Handle->microphone.Ep = AUDIO_Handle->stream_in[index].Ep;
-        AUDIO_Handle->microphone.EpSize = AUDIO_Handle->stream_in[index].EpSize;
-        AUDIO_Handle->microphone.Poll = (uint8_t)AUDIO_Handle->stream_out[index].Poll;
-        AUDIO_Handle->microphone.supported = 1U;
-      }
-    }
-  }
+		if (AUDIO_Handle->stream_in[index].valid == 1U)
+		{
+			if (ep_size_in < AUDIO_Handle->stream_in[index].EpSize)
+			{
+				ep_size_in = AUDIO_Handle->stream_in[index].EpSize;
+				AUDIO_Handle->microphone.interface = AUDIO_Handle->stream_in[index].interface;
+				AUDIO_Handle->microphone.AltSettings = AUDIO_Handle->stream_in[index].AltSettings;
+				AUDIO_Handle->microphone.Ep = AUDIO_Handle->stream_in[index].Ep;
+				AUDIO_Handle->microphone.EpSize = AUDIO_Handle->stream_in[index].EpSize;
+				AUDIO_Handle->microphone.Poll = (uint8_t)AUDIO_Handle->stream_out[index].Poll;
+				AUDIO_Handle->microphone.supported = 1U;
+			}
+		}
+	}
 
-  if (USBH_AUDIO_FindHIDControl(phost) == USBH_OK)
-  {
-    AUDIO_Handle->control.supported = 1U;
-  }
+	ep_size_in = 0;
+	ep_size_out = 0;
+	for (index = 0U; index < AUDIO_MAX_AUDIO_STD_INTERFACE; index ++)
+	{
+		if (AUDIO_Handle->midi_stream_in[index].valid == 1U)
+		{
+			if (ep_size_in < AUDIO_Handle->midi_stream_in[index].EpSize)
+			{
+				ep_size_in = AUDIO_Handle->midi_stream_in[index].EpSize;
+				AUDIO_Handle->midi_in.interface = AUDIO_Handle->midi_stream_in[index].interface;
+				AUDIO_Handle->midi_in.AltSettings = AUDIO_Handle->midi_stream_in[index].AltSettings;
+				AUDIO_Handle->midi_in.Ep = AUDIO_Handle->midi_stream_in[index].Ep;
+				AUDIO_Handle->midi_in.EpSize = AUDIO_Handle->midi_stream_in[index].EpSize;
+				AUDIO_Handle->midi_in.Poll = (uint8_t)AUDIO_Handle->midi_stream_in[index].Poll;
+				AUDIO_Handle->midi_in.supported = 1U;
+			}
+		}
+	}
 
-  /* 3rd Step:  Find and Parse Audio interfaces */
-  (void)USBH_AUDIO_ParseCSDescriptors(phost);
+	for (index = 0U; index < AUDIO_MAX_AUDIO_STD_INTERFACE; index ++)
+	{
+		if (AUDIO_Handle->midi_stream_out[index].valid == 1U)
+		{
+			if (ep_size_out < AUDIO_Handle->midi_stream_out[index].EpSize)
+			{
+				ep_size_out = AUDIO_Handle->midi_stream_out[index].EpSize;
+				AUDIO_Handle->midi_out.interface = AUDIO_Handle->midi_stream_out[index].interface;
+				AUDIO_Handle->midi_out.AltSettings = AUDIO_Handle->midi_stream_out[index].AltSettings;
+				AUDIO_Handle->midi_out.Ep = AUDIO_Handle->midi_stream_out[index].Ep;
+				AUDIO_Handle->midi_out.EpSize = AUDIO_Handle->midi_stream_out[index].EpSize;
+				AUDIO_Handle->midi_out.Poll = (uint8_t)AUDIO_Handle->midi_stream_out[index].Poll;
+				AUDIO_Handle->midi_out.supported = 1U;
+			}
+		}
+	}
+
+	if (USBH_AUDIO_FindHIDControl(phost) == USBH_OK)
+	{
+		AUDIO_Handle->control.supported = 1U;
+	}
+
+	/* 3rd Step:  Find and Parse Audio interfaces */
+	(void)USBH_AUDIO_ParseCSDescriptors(phost);
 
 
-  /* 4th Step:  Open the Audio streaming pipes*/
-  if (AUDIO_Handle->headphone.supported == 1U)
-  {
-    (void)USBH_AUDIO_BuildHeadphonePath(phost);
+	/* 4th Step:  Open the Audio streaming pipes*/
+	if (AUDIO_Handle->headphone.supported == 1U)
+	{
+		(void)USBH_AUDIO_BuildHeadphonePath(phost);
 
-    AUDIO_Handle->headphone.Pipe = USBH_AllocPipe(phost, AUDIO_Handle->headphone.Ep);
+		AUDIO_Handle->headphone.Pipe = USBH_AllocPipe(phost, AUDIO_Handle->headphone.Ep);
 
-    /* Open pipe for IN endpoint */
-    (void)USBH_OpenPipe(phost,
-                        AUDIO_Handle->headphone.Pipe,
-                        AUDIO_Handle->headphone.Ep,
-                        phost->device.address,
-                        phost->device.speed,
-                        USB_EP_TYPE_ISOC,
-                        AUDIO_Handle->headphone.EpSize);
+		/* Open pipe for IN endpoint */
+		(void)USBH_OpenPipe(phost,
+							AUDIO_Handle->headphone.Pipe,
+							AUDIO_Handle->headphone.Ep,
+							phost->device.address,
+							phost->device.speed,
+							USB_EP_TYPE_ISOC,
+							AUDIO_Handle->headphone.EpSize);
 
-    (void)USBH_LL_SetToggle(phost,  AUDIO_Handle->headphone.Pipe, 0U);
-  }
+		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->headphone.Pipe, 0U);
+	}
 
-  if (AUDIO_Handle->microphone.supported == 1U)
-  {
-    (void)USBH_AUDIO_BuildMicrophonePath(phost);
-    AUDIO_Handle->microphone.Pipe = USBH_AllocPipe(phost, AUDIO_Handle->microphone.Ep);
+	if (AUDIO_Handle->microphone.supported == 1U)
+	{
+		(void)USBH_AUDIO_BuildMicrophonePath(phost);
+		AUDIO_Handle->microphone.Pipe = USBH_AllocPipe(phost, AUDIO_Handle->microphone.Ep);
 
-    /* Open pipe for IN endpoint */
-    (void)USBH_OpenPipe(phost,
-                        AUDIO_Handle->microphone.Pipe,
-                        AUDIO_Handle->microphone.Ep,
-                        phost->device.address,
-                        phost->device.speed,
-                        USB_EP_TYPE_ISOC,
-                        AUDIO_Handle->microphone.EpSize);
+		/* Open pipe for IN endpoint */
+		(void)USBH_OpenPipe(phost,
+							AUDIO_Handle->microphone.Pipe,
+							AUDIO_Handle->microphone.Ep,
+							phost->device.address,
+							phost->device.speed,
+							USB_EP_TYPE_ISOC,
+							AUDIO_Handle->microphone.EpSize);
 
-    (void)USBH_LL_SetToggle(phost,  AUDIO_Handle->microphone.Pipe, 0U);
-  }
+		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->microphone.Pipe, 0U);
+	}
 
-  if (AUDIO_Handle->control.supported == 1U)
-  {
-    AUDIO_Handle->control.Pipe  = USBH_AllocPipe(phost, AUDIO_Handle->control.Ep);
+	if (AUDIO_Handle->control.supported == 1U)
+	{
+		AUDIO_Handle->control.Pipe  = USBH_AllocPipe(phost, AUDIO_Handle->control.Ep);
 
-    /* Open pipe for IN endpoint */
-    (void)USBH_OpenPipe(phost,
-                        AUDIO_Handle->control.Pipe,
-                        AUDIO_Handle->control.Ep,
-                        phost->device.address,
-                        phost->device.speed,
-                        USB_EP_TYPE_INTR,
-                        AUDIO_Handle->control.EpSize);
+		/* Open pipe for IN endpoint */
+		(void)USBH_OpenPipe(phost,
+							AUDIO_Handle->control.Pipe,
+							AUDIO_Handle->control.Ep,
+							phost->device.address,
+							phost->device.speed,
+							USB_EP_TYPE_INTR,
+							AUDIO_Handle->control.EpSize);
 
-    (void)USBH_LL_SetToggle(phost,  AUDIO_Handle->control.Pipe, 0U);
+		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->control.Pipe, 0U);
 
-  }
+	}
 
-  AUDIO_Handle->req_state = AUDIO_REQ_INIT;
-  AUDIO_Handle->control_state = AUDIO_CONTROL_INIT;
+	if (AUDIO_Handle->midi_in.supported == 1U)
+	{
+		AUDIO_Handle->midi_in.Pipe  = USBH_AllocPipe(phost, AUDIO_Handle->midi_in.Ep);
 
-  return USBH_OK;
+		/* Open pipe for midi IN endpoint */
+		(void)USBH_OpenPipe(phost,
+							AUDIO_Handle->midi_in.Pipe,
+							AUDIO_Handle->midi_in.Ep,
+							phost->device.address,
+							phost->device.speed,
+							USB_EP_TYPE_BULK,
+							AUDIO_Handle->midi_in.EpSize);
+
+		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->midi_in.Pipe, 0U);
+
+	}
+
+	if (AUDIO_Handle->midi_out.supported == 1U)
+	{
+		AUDIO_Handle->midi_out.Pipe  = USBH_AllocPipe(phost, AUDIO_Handle->midi_out.Ep);
+
+		/* Open pipe for midi OUT endpoint */
+		(void)USBH_OpenPipe(phost,
+							AUDIO_Handle->midi_out.Pipe,
+							AUDIO_Handle->midi_out.Ep,
+							phost->device.address,
+							phost->device.speed,
+							USB_EP_TYPE_BULK,
+							AUDIO_Handle->midi_out.EpSize);
+
+		(void)USBH_LL_SetToggle(phost,  AUDIO_Handle->midi_out.Pipe, 0U);
+
+	}
+
+	AUDIO_Handle->req_state = AUDIO_REQ_INIT;
+	AUDIO_Handle->control_state = AUDIO_CONTROL_INIT;
+
+	return USBH_OK;
 }
 
 
@@ -579,6 +652,11 @@ static USBH_StatusTypeDef USBH_AUDIO_CSRequest(USBH_HandleTypeDef *phost,
   USBH_StatusTypeDef req_status = USBH_BUSY;
   uint16_t VolumeCtl, ResolutionCtl;
 
+  if(AUDIO_Handle->midi_in.supported)
+  {
+	  AUDIO_Handle->cs_req_state = AUDIO_REQ_CS_IDLE;
+  }
+
   /* Switch AUDIO REQ state machine */
   switch (AUDIO_Handle->cs_req_state)
   {
@@ -712,20 +790,43 @@ static USBH_StatusTypeDef USBH_AUDIO_HandleCSRequest(USBH_HandleTypeDef *phost)
   */
 static USBH_StatusTypeDef USBH_AUDIO_Process(USBH_HandleTypeDef *phost)
 {
-  USBH_StatusTypeDef status = USBH_BUSY;
-  AUDIO_HandleTypeDef *AUDIO_Handle = (AUDIO_HandleTypeDef *)  phost->pActiveClass->pData;
+	static int status = 0;
+	int length = 0;
+	USBH_URBStateTypeDef URB_Status = USBH_URB_IDLE;
+	static uint8_t buffer[256];
+	AUDIO_HandleTypeDef *AUDIO_Handle = (AUDIO_HandleTypeDef *)  phost->pActiveClass->pData;
 
-  if (AUDIO_Handle->headphone.supported == 1U)
-  {
-    (void)USBH_AUDIO_OutputStream(phost);
-  }
+	if (AUDIO_Handle->headphone.supported == 1U)
+	{
+		(void)USBH_AUDIO_OutputStream(phost);
+	}
 
-  if (AUDIO_Handle->microphone.supported == 1U)
-  {
-    (void)USBH_AUDIO_InputStream(phost);
-  }
+	if (AUDIO_Handle->microphone.supported == 1U)
+	{
+		(void)USBH_AUDIO_InputStream(phost);
+	}
 
-  return status;
+	if(AUDIO_Handle->midi_in.supported)
+	{
+		if(status == 0)
+		{
+			USBH_BulkReceiveData(phost, buffer, AUDIO_Handle->midi_in.EpSize, AUDIO_Handle->midi_in.Pipe);
+			status = 1;
+		}
+		else
+		{
+			URB_Status = USBH_LL_GetURBState(phost, AUDIO_Handle->midi_in.Pipe);
+
+			/*Check the status done for reception*/
+			if (URB_Status == USBH_URB_DONE)
+			{
+				length = USBH_LL_GetLastXferSize(phost, AUDIO_Handle->midi_in.Pipe);
+			}
+			status = 1;
+		}
+	}
+
+	return status;
 }
 
 /**
@@ -741,6 +842,7 @@ static USBH_StatusTypeDef USBH_AUDIO_SOFProcess(USBH_HandleTypeDef *phost)
 
   return USBH_OK;
 }
+
 /**
   * @brief  Find IN Audio Streaming interfaces
   * @param  phost: Host handle
@@ -938,57 +1040,70 @@ static USBH_StatusTypeDef ParseCSDescriptors(AUDIO_ClassSpecificDescTypedef *cla
                                              uint8_t ac_subclass,
                                              uint8_t *pdesc)
 {
-  if (ac_subclass == USB_SUBCLASS_AUDIOCONTROL)
-  {
-    switch (pdesc[2])
-    {
-      case UAC_HEADER:
-        class_desc->cs_desc.HeaderDesc = (AUDIO_HeaderDescTypeDef *)(void *)pdesc;
-        break;
+	if (ac_subclass == USB_SUBCLASS_AUDIOCONTROL)
+	{
+	switch (pdesc[2])
+	{
+		case UAC_HEADER:
+			class_desc->cs_desc.HeaderDesc = (AUDIO_HeaderDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_INPUT_TERMINAL:
-        class_desc->cs_desc.InputTerminalDesc[class_desc->InputTerminalNum++] = (AUDIO_ITDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_INPUT_TERMINAL:
+			class_desc->cs_desc.InputTerminalDesc[class_desc->InputTerminalNum++] = (AUDIO_ITDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_OUTPUT_TERMINAL:
-        class_desc->cs_desc.OutputTerminalDesc[class_desc->OutputTerminalNum++] = (AUDIO_OTDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_OUTPUT_TERMINAL:
+			class_desc->cs_desc.OutputTerminalDesc[class_desc->OutputTerminalNum++] = (AUDIO_OTDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_FEATURE_UNIT:
-        class_desc->cs_desc.FeatureUnitDesc[class_desc->FeatureUnitNum++] = (AUDIO_FeatureDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_FEATURE_UNIT:
+			class_desc->cs_desc.FeatureUnitDesc[class_desc->FeatureUnitNum++] = (AUDIO_FeatureDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_SELECTOR_UNIT:
-        class_desc->cs_desc.SelectorUnitDesc[class_desc->SelectorUnitNum++] = (AUDIO_SelectorDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_SELECTOR_UNIT:
+			class_desc->cs_desc.SelectorUnitDesc[class_desc->SelectorUnitNum++] = (AUDIO_SelectorDescTypeDef *)(void *)pdesc;
+			break;
 
-      case UAC_MIXER_UNIT:
-        class_desc->cs_desc.MixerUnitDesc[class_desc->MixerUnitNum++] = (AUDIO_MixerDescTypeDef *)(void *)pdesc;
-        break;
+		case UAC_MIXER_UNIT:
+			class_desc->cs_desc.MixerUnitDesc[class_desc->MixerUnitNum++] = (AUDIO_MixerDescTypeDef *)(void *)pdesc;
+			break;
 
-      default:
-        break;
-    }
-  }
-  else
-  {
-    if (ac_subclass == USB_SUBCLASS_AUDIOSTREAMING)
-    {
-      switch (pdesc[2])
-      {
-        case UAC_AS_GENERAL:
-          class_desc->as_desc[class_desc->ASNum].GeneralDesc = (AUDIO_ASGeneralDescTypeDef *)(void *)pdesc;
-          break;
-        case UAC_FORMAT_TYPE:
-          class_desc->as_desc[class_desc->ASNum++].FormatTypeDesc = (AUDIO_ASFormatTypeDescTypeDef *)(void *)pdesc;
-          break;
-        default:
-          break;
-      }
-    }
-  }
+		default:
+			break;
+	}
+	}
+	else if (ac_subclass == USB_SUBCLASS_AUDIOSTREAMING)
+	{
+		switch (pdesc[2])
+		{
+		case UAC_AS_GENERAL:
+			class_desc->as_desc[class_desc->ASNum].GeneralDesc = (AUDIO_ASGeneralDescTypeDef *)(void *)pdesc;
+			break;
+		case UAC_FORMAT_TYPE:
+			class_desc->as_desc[class_desc->ASNum++].FormatTypeDesc = (AUDIO_ASFormatTypeDescTypeDef *)(void *)pdesc;
+			break;
+		default:
+			break;
+		}
 
-  return USBH_OK;
+	}
+	else if(ac_subclass == USB_SUBCLASS_MIDISTREAMING)
+	{
+		switch (pdesc[2])
+		{
+		case MS_HEADER:
+			class_desc->ms_desc.HeaderDesc = (AUDIO_MSHeaderDescTypeDef*)(void*)pdesc;
+			break;
+		case MIDI_IN_JACK:
+			class_desc->ms_desc.MidiINJackDesc[class_desc->MidiInputJackNum++] = (AUDIO_MidiINJackDescTypeDef*)(void*)pdesc;
+			break;
+		case MIDI_OUT_JACK:
+			class_desc->ms_desc.MidiOutJackDesc[class_desc->MidiOutputJackNum++] = (AUDIO_MidiOUTJackDescTypeDef*)(void*)pdesc;
+			break;
+		}
+	}
+
+	return USBH_OK;
 }
 
 
